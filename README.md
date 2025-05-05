@@ -24,3 +24,23 @@ This project is a C++ console-based simulation of a hospital management system. 
 - Any C++ compiler (e.g., g++, clang++)
 - A terminal or command prompt
 
+Menu Options (Example Run):
+
+--- Hospital System Menu ---
+1. Add Patient
+2. Add Patient to Emergency Queue
+3. Record Treatment
+4. Undo Last Treatment
+5. Show Patient History
+6. Exit
+
+After adding a patient, their full info will be printed as confirmation.
+Treatments can only be added for patients already registered in the system.
+Patient Info will show treatment history if any; otherwise, it informs you that there's no treatment.
+
+
+Example Treatment Recording:
+Enter Patient ID: P001
+Enter Treatment: Antibiotics - 500mg daily
+-> Treatment recorded successfully
+
