@@ -3,7 +3,7 @@
 #include <map>
 using namespace std;
 
-// ========== Patient Structure ==========
+// patient structure
 struct Patient {
     string id;
     string name;
@@ -11,21 +11,25 @@ struct Patient {
     string condition;
 };
 
-// ========== Treatment Structure & Stack ==========
+// treatment node for stack
 struct Treatment {
-    string treatmentDetails;
+    string details;
     Treatment* next;
 };
 
+// Stack to store treatments
 class TreatmentStack {
 private:
     Treatment* top;
 public:
-    TreatmentStack() : top(nullptr) {}
+    TreatmentStack() {
+       top = nullptr;
+    }
+
 
     void push(string details) {
         Treatment* newNode = new Treatment;
-        newNode->treatmentDetails = details;
+        newNode->details = details;
         newNode->next = top;
         top = newNode;
     }
@@ -35,20 +39,20 @@ public:
             cout << "No treatments to undo.\n";
             return;
         }
-        cout << "Undoing treatment: " << top->treatmentDetails << endl;
+        cout << "Undoing treatment: " << top->details << endl;
         Treatment* temp = top;
         top = top->next;
         delete temp;
     }
 
     void display() {
-        Treatment* temp = top;
-        if (!temp) {
+        if (!top) {
             cout << "No treatments recorded.\n";
             return;
         }
+        Treatment* temp = top;
         while (temp) {
-            cout << "  - Treatment: " << temp->treatmentDetails << endl;
+            cout << "  - Treatment: " << temp->details << endl;
             temp = temp->next;
         }
     }
@@ -58,132 +62,154 @@ public:
     }
 };
 
-// ========== Priority Queue ==========
-struct PriorityPatientNode {
-    Patient data;
+// Priority queue node
+struct PriorityNode {
+    Patient patient;
     int priority;
-    PriorityPatientNode* next;
+    PriorityNode* next;
 };
 
+// Priority queue for emergencies
 class PriorityQueue {
 private:
-    PriorityPatientNode* front;
+    PriorityNode* front;
 public:
-    PriorityQueue() : front(nullptr) {}
+    PriorityQueue() {
+        front = nullptr;
+    }  
 
-    void enqueue(Patient p, int priority) {
-        PriorityPatientNode* newNode = new PriorityPatientNode;
-        newNode->data = p;
+
+    void enqueue(Patient patient, int priority) {
+        PriorityNode* newNode = new PriorityNode;
+        newNode->patient = patient;
         newNode->priority = priority;
         newNode->next = nullptr;
 
-        if (!front || priority < front->priority) {
+        if (front == nullptr || priority < front->priority) {
             newNode->next = front;
             front = newNode;
         } else {
-            PriorityPatientNode* temp = front;
-            while (temp->next && temp->next->priority <= priority)
+            PriorityNode* temp = front;
+
+            while (temp->next && temp->next->priority <= priority) {
                 temp = temp->next;
+            }
             newNode->next = temp->next;
             temp->next = newNode;
         }
-        cout << "Added to emergency queue: " << p.name << " (Priority: " << priority << ")\n";
-    }
 
-    bool isEmpty() {
-        return front == nullptr;
+        cout << "Added to emergency queue: " << patient.name << " (Priority: " << priority << ")\n";
     }
 };
 
-// ========== General Patient Records ==========
-map<string, Patient> patientMap; // key = ID
-map<string, TreatmentStack> treatmentHistory; // key = ID
-
-// ========== Main Program ==========
+map<string, Patient> patients;
+map<string, TreatmentStack> treatments;
 int main() {
-    PriorityQueue emergencyQueue;
-    string choice;
+    PriorityQueue emergencyList;
+    string userChoice;
 
     while (true) {
-        cout << "\n--- Hospital System Menu ---\n";
+        // Show menu
+        cout << "\n--- Hospital Menu ---\n";
         cout << "1. Add Patient\n";
-        cout << "2. Add Patient to Emergency Queue\n";
-        cout << "3. Record Treatment\n";
-        cout << "4. Undo Last Treatment\n";
-        cout << "5. Show Patient History\n";
+        cout << "2. Add to Emergency Queue\n";
+        cout << "3. Add Treatment\n";
+        cout << "4. Remove Last Treatment\n";
+        cout << "5. Show All Patients\n";
         cout << "6. Exit\n";
-        cout << "Enter choice: ";
-        cin >> choice;
+        cout << "Enter your choice: ";
+        cin >> userChoice;
 
-        if (choice == "1") {
-            Patient p;
-            cout << "Enter ID: "; cin >> p.id;
+        // Add new patient
+        if (userChoice == "1") {
+            Patient newPatient;
+            cout << "Enter ID: ";
+            cin >> newPatient.id;
             cin.ignore();
-            cout << "Enter Name: "; getline(cin, p.name);
-            cout << "Enter Age: "; cin >> p.age;
+            cout << "Enter Name: ";
+            getline(cin, newPatient.name);
+            cout << "Enter Age: ";
+            cin >> newPatient.age;
             cin.ignore();
-            cout << "Enter Condition: "; getline(cin, p.condition);
+            cout << "Enter Condition: ";
+            getline(cin, newPatient.condition);
 
-            patientMap[p.id] = p;
-            cout << "\nPatient added successfully:\n";
-            cout << "ID: " << p.id << ", Name: " << p.name << ", Age: " << p.age << ", Condition: " << p.condition << endl;
+            patients[newPatient.id] = newPatient;
+            cout << "Patient added.\n";
         }
-        else if (choice == "2") {
-            string id;
+
+        // Add patient to emergency queue
+        else if (userChoice == "2") {
+            string patientId;
             int priority;
-            cout << "Enter Patient ID: "; cin >> id;
-            cout << "Enter Priority (1=critical, 2=medium, 3=low): "; cin >> priority;
-            if (patientMap.find(id) != patientMap.end()) {
-                emergencyQueue.enqueue(patientMap[id], priority);
+            cout << "Enter Patient ID: ";
+            cin >> patientId;
+            cout << "Enter Priority (1=High, 2=Medium, 3=Low): ";
+            cin >> priority;
+
+            if (patients.count(patientId)) {
+                emergencyList.enqueue(patients[patientId], priority);
             } else {
-                cout << "Error: Patient ID not found.\n";
+                cout << "Patient not found.\n";
             }
         }
-        else if (choice == "3") {
-            string id, details;
-            cout << "Enter Patient ID: "; cin >> id;
+
+        // Add treatment for a patient
+        else if (userChoice == "3") {
+            string patientId, treatmentInfo;
+            cout << "Enter Patient ID: ";
+            cin >> patientId;
             cin.ignore();
-            if (patientMap.find(id) != patientMap.end()) {
-                cout << "Enter Treatment Details: "; getline(cin, details);
-                treatmentHistory[id].push(details);
-                cout << "Treatment recorded.\n";
+            if (patients.count(patientId)) {
+                cout << "Enter Treatment Info: ";
+                getline(cin, treatmentInfo);
+                treatments[patientId].push(treatmentInfo);
+                cout << "Treatment saved.\n";
             } else {
-                cout << "Error: Patient ID not found.\n";
+                cout << "Patient not found.\n";
             }
         }
-        else if (choice == "4") {
-            string id;
-            cout << "Enter Patient ID: "; cin >> id;
-            if (treatmentHistory.find(id) != treatmentHistory.end()) {
-                treatmentHistory[id].pop();
+
+        // Undo last treatment
+        else if (userChoice == "4") {
+            string patientId;
+            cout << "Enter Patient ID: ";
+            cin >> patientId;
+            if (treatments.count(patientId)) {
+                treatments[patientId].pop();
             } else {
-                cout << "No treatment history found for this ID.\n";
+                cout << "No treatments found.\n";
             }
         }
-        else if (choice == "5") {
-            cout << "\n--- Full Patient History ---\n";
-            if (patientMap.empty()) {
-                cout << "No patients available.\n";
-            } else {
-                for (auto& entry : patientMap) {
-                    Patient p = entry.second;
-                    cout << "\nID: " << p.id << ", Name: " << p.name << ", Age: " << p.age << ", Condition: " << p.condition << endl;
-                    cout << "Treatments:" << endl;
-                    if (treatmentHistory.find(p.id) != treatmentHistory.end())
-                        treatmentHistory[p.id].display();
-                    else
-                        cout << "  No treatments recorded.\n";
+
+        // Show all patient info
+        else if (userChoice == "5") {
+            for (auto& item : patients) {
+                Patient newPatient = item.second;
+                cout << "\nID: " << newPatient.id << ", Name: " << newPatient.name
+                     << ", Age: " << newPatient.age << ", Condition: " << newPatient.condition << endl;
+                cout << "Treatments:\n";
+
+                if (treatments.count(newPatient.id)) {
+                    treatments[newPatient.id].display();
+                } else {
+                    cout << "  No treatments recorded.\n";
                 }
             }
         }
 
-        else if (choice == "7") {
-            cout << "Exiting system. Goodbye!\n";
+        // Exit the system
+        else if (userChoice == "6") {
+            cout << "Goodbye!\n";
             break;
         }
+
+        // If the user enters something wrong
         else {
             cout << "Invalid option. Try again.\n";
         }
     }
+
     return 0;
 }
+ 
